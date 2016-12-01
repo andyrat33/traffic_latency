@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import csv
 import argparse
-
+from json import dump, load
 
 
 # cmd options 
@@ -64,12 +64,21 @@ def rTraffic(filename):
                 counter += 1
     return (counter, data)
 
-def saveFlow(flowData):
-    pass
+def saveFlow(filename,flowData):
+    filename = filename.split('.')[0]+'.json'
+    print filename
+    
+    with open(filename, mode='wb') as saveFlow:
+        dump(flowData, saveFlow)
+
+def loadFile(jsonFile=args.loadFile):
+    with open(flowData) as loadFlow:
+        return load(loadFlow)
+        
 
 
 numOfFlows, fData = rTraffic(args.filename)
-
+saveFlow(args.filename,fData)
 
 for xe, ye in fData.iteritems():
     print xe,ye
