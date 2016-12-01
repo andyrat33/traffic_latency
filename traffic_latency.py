@@ -1,4 +1,4 @@
-#Version 2
+#Version 3
 import matplotlib.pyplot as plt
 import csv
 import argparse
@@ -18,7 +18,7 @@ group = parser.add_mutually_exclusive_group()
 
 group.add_argument("-l", "--load", dest="loadFile", help="load a saved set of flows", metavar="FILE")
 group.add_argument("-f", "--file", dest="filename", help="wireshark csv file", metavar="FILE")
-parser.add_argument("-p", "--print", action="store_true", help="print unidirectional flow tuples")
+parser.add_argument("-p", "--print", dest="dataprint", action="store_true", help="print unidirectional flow tuples")
 parser.add_argument("-g", "--graph", nargs = '*', dest="flowToGraph", help="select the flow to graph, use -p to print flows", metavar="FLOW")
 args = parser.parse_args()
 
@@ -56,41 +56,52 @@ def rTraffic(filename):
                     exit()
     
                 continue
-            if not (row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]]) in data and float(row[f["Time since previous frame in this TCP stream"]]) != 0.0:
-                data[(row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]])] = [float(row[f["Time since previous frame in this TCP stream"]])]
+            if not str((row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]])) in data and float(row[f["Time since previous frame in this TCP stream"]]) != 0.0:
+                data[str((row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]]))] = [float(row[f["Time since previous frame in this TCP stream"]])]
                 counter += 1
             elif float(row[f["Time since previous frame in this TCP stream"]]) != 0.0:
-                data[(row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]])].append(float(row[f["Time since previous frame in this TCP stream"]]))
+                data[str((row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]]))].append(float(row[f["Time since previous frame in this TCP stream"]]))
                 counter += 1
     return (counter, data)
 
 def saveFlow(filename,flowData):
     filename = filename.split('.')[0]+'.json'
-    print filename
-    
-    with open(filename, mode='wb') as saveFlow:
-        dump(flowData, saveFlow)
+    with open(filename, mode='wb') as saveFlowData:
+        dump(flowData, saveFlowData)
 
 def loadFile(jsonFile=args.loadFile):
-    with open(flowData) as loadFlow:
+    with open(jsonFile) as loadFlow:
         return load(loadFlow)
-        
+
+def printFlows():
+    for xe, ye in fData.iteritems():
+        print xe,ye    
+
+def graphFlows(listOfFlows=args.flowToGraph):
+    pass
 
 
-numOfFlows, fData = rTraffic(args.filename)
-saveFlow(args.filename,fData)
+if args.loadFile:
+    fData = loadFile()
+    if args.dataprint:
+        printFlows()
+        exit()
+else:    
+    numOfFlows, fData = rTraffic(args.filename)
+    saveFlow(args.filename,fData)
+    if args.dataprint:
+        printFlows()
+        exit()    
 
 for xe, ye in fData.iteritems():
-    print xe,ye
-
     plt.scatter(range(len(ye)), ye)
     
     
 
 #print "The total number of uni-directional conversations plotted is ", len(data)
-print "The total number of x values plotted is ", numOfFlows
+#print "The total number of x values plotted is ", numOfFlows
 
-#plt.ylabel('Latency')
-#plt.xlabel('Samples')
-#plt.axis(ymax=1)
-#plt.show()
+plt.ylabel('Latency')
+plt.xlabel('Samples')
+plt.axis(ymax=1)
+plt.show()
