@@ -80,7 +80,8 @@ def printFlows(pfData, display=True):
         lookup[int(index)] = key
     return lookup
 
-def graphFlows(listOfFlows, keysToGraph):
+def graphFlows(listOfFlows):
+    keysToGraph = printFlows(fData, display=False)
     nData = {}
     for f in listOfFlows:
         nData[keysToGraph[int(f)]] = fData[keysToGraph[int(f)]]
@@ -99,8 +100,7 @@ else:
         exit()    
 
 if args.flowToGraph:
-    indexLookup = printFlows(fData, display=False)
-    fData = graphFlows(args.flowToGraph, indexLookup)
+    fData = graphFlows(args.flowToGraph)
 
 for xe, ye in fData.iteritems():
     plt.scatter(range(len(ye)), ye)
