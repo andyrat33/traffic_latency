@@ -73,25 +73,34 @@ def loadFile(jsonFile=args.loadFile):
     with open(jsonFile) as loadFlow:
         return load(loadFlow)
 
-def printFlows():
-    for xe, ye in fData.iteritems():
-        print xe,ye    
+def printFlows(pfData, display=True):
+    lookup = {}
+    for index, key in enumerate(pfData.keys()):
+        if display: print index, key
+        lookup[int(index)] = key
+    return lookup
 
-def graphFlows(listOfFlows=args.flowToGraph):
-    pass
-
+def graphFlows(listOfFlows, keysToGraph):
+    nData = {}
+    for f in listOfFlows:
+        nData[keysToGraph[int(f)]] = fData[keysToGraph[int(f)]]
+    return nData
 
 if args.loadFile:
     fData = loadFile()
     if args.dataprint:
-        printFlows()
+        indexLookup = printFlows(fData)
         exit()
 else:    
     numOfFlows, fData = rTraffic(args.filename)
     saveFlow(args.filename,fData)
     if args.dataprint:
-        printFlows()
+        indexLookup = printFlows(fData)
         exit()    
+
+if args.flowToGraph:
+    indexLookup = printFlows(fData, display=False)
+    fData = graphFlows(args.flowToGraph, indexLookup)
 
 for xe, ye in fData.iteritems():
     plt.scatter(range(len(ye)), ye)
