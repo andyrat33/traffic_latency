@@ -1,6 +1,7 @@
 #Version 3
 import matplotlib.pyplot as plt
 import csv
+import sys
 import argparse
 from json import dump, load
 
@@ -80,37 +81,45 @@ def printFlows(pfData, display=True):
         lookup[int(index)] = key
     return lookup
 
-def graphFlows(listOfFlows):
-    keysToGraph = printFlows(fData, display=False)
+def graphFlows(listOfFlows,gData):
+    keysToGraph = printFlows(gData, display=False)
     nData = {}
     for f in listOfFlows:
-        nData[keysToGraph[int(f)]] = fData[keysToGraph[int(f)]]
+        try:
+            nData[keysToGraph[int(f)]] = fData[keysToGraph[int(f)]]
+        except KeyError as e:
+            print "FLOW {} not found".format(e)
+        
     return nData
+
+
 
 if args.loadFile:
     fData = loadFile()
-    if args.dataprint:
-        indexLookup = printFlows(fData)
-        exit()
+    
 else:    
     numOfFlows, fData = rTraffic(args.filename)
     saveFlow(args.filename,fData)
-    if args.dataprint:
-        indexLookup = printFlows(fData)
-        exit()    
+
+if args.dataprint:
+    printFlows(fData)
+    sys.exit()
 
 if args.flowToGraph:
-    fData = graphFlows(args.flowToGraph)
+    fData = graphFlows(args.flowToGraph, fData)
 
-for xe, ye in fData.iteritems():
-    plt.scatter(range(len(ye)), ye)
+if len(fData) > 0:
+    for xe, ye in fData.iteritems():
+        plt.scatter(range(len(ye)), ye)
+        
+        
     
+    #print "The total number of uni-directional conversations plotted is ", len(data)
+    #print "The total number of x values plotted is ", numOfFlows
     
-
-#print "The total number of uni-directional conversations plotted is ", len(data)
-#print "The total number of x values plotted is ", numOfFlows
-
-plt.ylabel('Latency')
-plt.xlabel('Samples')
-plt.axis(ymax=1)
-plt.show()
+    plt.ylabel('Latency')
+    plt.xlabel('Samples')
+    plt.axis(ymax=1)
+    plt.show()
+else:
+    print "No data to graph"
