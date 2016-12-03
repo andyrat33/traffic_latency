@@ -16,15 +16,13 @@ parser = argparse.ArgumentParser()
 
 parser = argparse.ArgumentParser(description="plot a graph showing the latency in tcp streams")
 group = parser.add_mutually_exclusive_group()
-
-group.add_argument("-l", "--load", dest="loadFile", help="load a saved set of flows", metavar="FILE")
+group2 = parser.add_mutually_exclusive_group()
+group.add_argument("-l", "--load", dest="loadFile", help="load a saved set of flows", metavar="JSON_FILE")
 group.add_argument("-f", "--file", dest="filename", help="wireshark csv file", metavar="FILE")
-parser.add_argument("-p", "--print", dest="dataprint", action="store_true", help="print unidirectional flow tuples")
-parser.add_argument("-g", "--graph", nargs = '*', dest="flowToGraph", help="select the flow to graph, use -p to print flows", metavar="FLOW")
+group2.add_argument("-p", "--print", dest="dataprint", action="store_true", help="print unidirectional flow tuples")
+group2.add_argument("-g", "--graph", nargs = '*', dest="flowToGraph", help="select the flow to graph, use -p to print flows", metavar="FLOW")
 args = parser.parse_args()
 
-
-counter2 = 0
 
 def rTraffic(filename):
     """open csv export from wireshark and parse to a uni_flow list with collected latency. Return counter & dict tuple"""
@@ -45,34 +43,54 @@ def rTraffic(filename):
     data = dict()
     top=True
     
-    counter = 0    
-    with open(filename, mode='rb') as pcap:
-        wline = csv.reader(pcap, delimiter=',')
-        for row in wline:
-            if top:
-                top=False
-                if sTraffic != row:
-                    print "Wireshark CSV Export should have this structure"
-                    print ', '.join(sTraffic)
-                    exit()
-    
-                continue
-            if not str((row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]])) in data and float(row[f["Time since previous frame in this TCP stream"]]) != 0.0:
-                data[str((row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]]))] = [float(row[f["Time since previous frame in this TCP stream"]])]
-                counter += 1
-            elif float(row[f["Time since previous frame in this TCP stream"]]) != 0.0:
-                data[str((row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]]))].append(float(row[f["Time since previous frame in this TCP stream"]]))
-                counter += 1
-    return (counter, data)
+    counter = 0   
+    try:
+        pcap = open(filename, mode='rb')
+    except IOError as e:
+        print "Error: {}".format(e)
+        sys.exit()
+    else:
+        with pcap:
+            wline = csv.reader(pcap, delimiter=',')
+            for row in wline:
+                if top:
+                    top=False
+                    if sTraffic != row:
+                        print "Wireshark CSV Export should have this structure"
+                        print ', '.join(sTraffic)
+                        sys.exit()
+        
+                    continue
+                if not str((row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]])) in data and float(row[f["Time since previous frame in this TCP stream"]]) != 0.0:
+                    data[str((row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]]))] = [float(row[f["Time since previous frame in this TCP stream"]])]
+                    counter += 1
+                elif float(row[f["Time since previous frame in this TCP stream"]]) != 0.0:
+                    data[str((row[f["Source"]],row[f["SPort"]],row[f["Destination"]],row[f["DPort"]]))].append(float(row[f["Time since previous frame in this TCP stream"]]))
+                    counter += 1
+        return (counter, data)
 
 def saveFlow(filename,flowData):
     filename = filename.split('.')[0]+'.json'
-    with open(filename, mode='wb') as saveFlowData:
-        dump(flowData, saveFlowData)
+    try:
+        saveFlowData = open(filename, mode='wb')
+    except IOError as e:
+        print "Error: {}".format(e)
+        sys.exit()
+    else:
+        with saveFlowData:
+            dump(flowData, saveFlowData)
+    
 
 def loadFile(jsonFile=args.loadFile):
-    with open(jsonFile) as loadFlow:
-        return load(loadFlow)
+    try:
+        loadFlow = open(jsonFile)
+    except IOError as e:
+        print "Error: {}".format(e)
+        sys.exit()
+    else:
+        with loadFlow:
+            return load(loadFlow)
+    
 
 def printFlows(pfData, display=True):
     lookup = {}
@@ -100,6 +118,8 @@ if args.loadFile:
 else:    
     numOfFlows, fData = rTraffic(args.filename)
     saveFlow(args.filename,fData)
+    print "The total number of uni-directional conversations plotted is ", len(fData)
+    print "The total number of x values plotted is ", numOfFlows    
 
 if args.dataprint:
     printFlows(fData)
@@ -111,11 +131,6 @@ if args.flowToGraph:
 if len(fData) > 0:
     for xe, ye in fData.iteritems():
         plt.scatter(range(len(ye)), ye)
-        
-        
-    
-    #print "The total number of uni-directional conversations plotted is ", len(data)
-    #print "The total number of x values plotted is ", numOfFlows
     
     plt.ylabel('Latency')
     plt.xlabel('Samples')
