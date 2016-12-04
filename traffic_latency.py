@@ -104,7 +104,7 @@ def graphFlows(listOfFlows,gData):
     nData = {}
     for f in listOfFlows:
         try:
-            nData[keysToGraph[f]] = fData[keysToGraph[f]]
+            nData[keysToGraph[f]] = gData[keysToGraph[f]]
         except KeyError as e:
             print "FLOW {} not found".format(e)
         
