@@ -20,7 +20,7 @@ group2 = parser.add_mutually_exclusive_group()
 group.add_argument("-l", "--load", dest="loadFile", help="load a saved set of flows", metavar="JSON_FILE")
 group.add_argument("-f", "--file", dest="filename", help="wireshark csv file", metavar="FILE")
 group2.add_argument("-p", "--print", dest="dataprint", action="store_true", help="print unidirectional flow tuples")
-group2.add_argument("-g", "--graph", nargs = '*', dest="flowToGraph", help="select the flow to graph, use -p to print flows", metavar="FLOW")
+group2.add_argument("-g", "--graph", nargs = '*', type=int, dest="flowToGraph", help="select the flow to graph, use -p to print flows", metavar="FLOW")
 args = parser.parse_args()
 
 
@@ -104,7 +104,7 @@ def graphFlows(listOfFlows,gData):
     nData = {}
     for f in listOfFlows:
         try:
-            nData[keysToGraph[int(f)]] = fData[keysToGraph[int(f)]]
+            nData[keysToGraph[f]] = fData[keysToGraph[f]]
         except KeyError as e:
             print "FLOW {} not found".format(e)
         
