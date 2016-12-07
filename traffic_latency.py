@@ -40,6 +40,7 @@ def rTraffic(filename):
     "Info"
     ]    
     f = {field:i for i,field in enumerate(sTraffic)}
+    # dict: f used to add offset to slice with as a word that identifies the field better
     data = dict()
     top=True
     
